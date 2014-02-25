@@ -27,7 +27,7 @@ var Router = function(namespace) {
     var handlers = options.handlers || instance;
 
     // Cached regex for stripping a leading hash/slash and trailing space.
-    var routeStripper = /^[#\/]|\s+$/g;
+    var routeStripper = /^[#\/]+|\s+$/g;
 
     // Cached regex for stripping leading and trailing slashes.
     var rootStripper = /^\/+|\/+$/g;
@@ -122,7 +122,12 @@ var Router = function(namespace) {
     self.listen = function(callback) {
       self._hasPushState = !!(window.history && window.history.pushState);
       self.root = window.location.pathname;
+      self.root = trailingSlash.test(self.root) ? self.root : self.root + '/';
 
+      var getUrlString = function() {
+        var loc = window.location;
+        return loc.protocol + '//' + loc.host + self.root + loc.hash.replace(routeStripper, '');
+      };
 
       if (self._hasPushState) {
 
@@ -138,13 +143,13 @@ var Router = function(namespace) {
         // This implies that the router is starting to listen before the DOM is completely ready.
         window.onpopstate = function(e) {
           if (e.state) {
-            self.navigate(window.location.href);
+            self.navigate(getUrlString());
           }
         };
 
       }
 
-      self.navigate(window.location.href, callback);
+      self.navigate(getUrlString(), callback);
     };
 
     // client side url navigation
